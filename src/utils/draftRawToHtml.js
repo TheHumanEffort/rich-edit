@@ -55,7 +55,7 @@ export default function(raw) {
         processInlineStylesAndEntities(inlineTagMap, entityTagMap, raw.entityMap, block) +
         blockTag[1] :
       blockTagMap['default'][0] +
-        processInlineStylesAndEntities(inlineTagMap, block) +
+      processInlineStylesAndEntities(inlineTagMap, entityTagMap, raw.entityMap, block) +
         blockTagMap['default'][1];
 
     // close any unclosed blocks if we've processed all the blocks
