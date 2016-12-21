@@ -24,63 +24,69 @@ import findEntities from './utils/findEntities';
 export default class BasicHtmlEditor extends React.Component {
   constructor(props) {
     super(props);
-    let { value } = props;
+    let htmlValue = props.html;
+    let jsonValue = props.json;
+    let editorState;
 
     const decorator = new CompositeDecorator([
       {
         strategy: findEntities.bind(null, 'link'),
-        component: Link
-      }
+        component: Link,
+      },
     ]);
 
     this.ENTITY_CONTROLS = [
-      {label: 'Add Link', action: this._addLink.bind(this) },
-      {label: 'Remove Link', action: this._removeLink.bind(this) }
+      { label: 'Add Link', action: this._addLink.bind(this) },
+      { label: 'Remove Link', action: this._removeLink.bind(this) },
     ];
 
     this.INLINE_STYLES = [
-      {label: 'Bold', style: 'BOLD'},
-      {label: 'Italic', style: 'ITALIC'},
-      {label: 'Underline', style: 'UNDERLINE'},
-      {label: 'Monospace', style: 'CODE'},
-      {label: 'Strikethrough', style: 'STRIKETHROUGH'}
+      { label: 'Bold', style: 'BOLD' },
+      { label: 'Italic', style: 'ITALIC' },
+      { label: 'Underline', style: 'UNDERLINE' },
+      { label: 'Monospace', style: 'CODE' },
+      { label: 'Strikethrough', style: 'STRIKETHROUGH' },
     ];
 
     this.BLOCK_TYPES = [
-      {label: 'P', style: 'unstyled'},
-      {label: 'H1', style: 'header-one'},
-      {label: 'H2', style: 'header-two'},
-      {label: 'Blockquote', style: 'blockquote'},
-      {label: 'UL', style: 'unordered-list-item'},
-      {label: 'OL', style: 'ordered-list-item'},
-      {label: 'Code Block', style: 'code-block'}
+      { label: 'P', style: 'unstyled' },
+      { label: 'H1', style: 'header-one' },
+      { label: 'H2', style: 'header-two' },
+      { label: 'Blockquote', style: 'blockquote' },
+      { label: 'UL', style: 'unordered-list-item' },
+      { label: 'OL', style: 'ordered-list-item' },
+      { label: 'Code Block', style: 'code-block' },
     ];
 
-    this.state = {
-      editorState: value ?
-        EditorState.createWithContent(
-          ContentState.createFromBlockArray(htmlToContent(value)),
-          decorator
-        ) :
-        EditorState.createEmpty(decorator)
-    };
+    jsonValue = jsonValue || htmlToContent(htmlValue);
+
+    if (jsonValue) {
+      editorState = EditorState.createWithContent(
+      ContentState.createFromBlockArray(jsonValue),
+      decorator);
+    } else {
+      editorState = EditorState.createEmpty(decorator);
+    }
+
+    this.state = { editorState };
 
     // this.focus = () => this.refs.editor.focus();
     this.onChange = (editorState) => {
       let previousContent = this.state.editorState.getCurrentContent();
-      this.setState({editorState});
+      this.setState({ editorState });
 
       // only emit html when content changes
-      if( previousContent !== editorState.getCurrentContent() ) {
+      if (previousContent !== editorState.getCurrentContent()) {
         this.emitHTML(editorState);
       }
     };
 
     function emitHTML(editorState) {
-      let raw = convertToRaw( editorState.getCurrentContent() );
+      let raw = convertToRaw(editorState.getCurrentContent());
       let html = draftRawToHtml(raw);
-      this.props.onChange(html);
+      this.props.onChange(html, raw);
     }
+
     this.emitHTML = debounce(emitHTML, this.props.debounce);
 
     this.handleKeyCommand = (command) => this._handleKeyCommand(command);
@@ -92,12 +98,13 @@ export default class BasicHtmlEditor extends React.Component {
   }
 
   _handleKeyCommand(command) {
-    const {editorState} = this.state;
+    const { editorState } = this.state;
     const newState = RichUtils.handleKeyCommand(editorState, command);
     if (newState) {
       this.onChange(newState);
       return true;
     }
+
     return false;
   }
 
@@ -129,7 +136,7 @@ export default class BasicHtmlEditor extends React.Component {
 
   _addLineBreak(/* e */) {
     let newContent, newEditorState;
-    const {editorState} = this.state;
+    const { editorState } = this.state;
     const content = editorState.getCurrentContent();
     const selection = editorState.getSelection();
     const block = content.getBlockForKey(selection.getStartKey());
@@ -147,27 +154,29 @@ export default class BasicHtmlEditor extends React.Component {
   }
 
   _addLink(/* e */) {
-    const {editorState} = this.state;
+    const { editorState } = this.state;
     const selection = editorState.getSelection();
     if (selection.isCollapsed()) {
       return;
     }
+
     const href = window.prompt('Enter a URL');
-    const entityKey = Entity.create('link', 'MUTABLE', {href});
+    const entityKey = Entity.create('link', 'MUTABLE', { href });
     this.onChange(RichUtils.toggleLink(editorState, selection, entityKey));
   }
 
   _removeLink(/* e */) {
-    const {editorState} = this.state;
+    const { editorState } = this.state;
     const selection = editorState.getSelection();
     if (selection.isCollapsed()) {
       return;
     }
-    this.onChange( RichUtils.toggleLink(editorState, selection, null));
+
+    this.onChange(RichUtils.toggleLink(editorState, selection, null));
   }
 
   render() {
-    const {editorState} = this.state;
+    const { editorState } = this.state;
 
     // If the user changes block type before entering any text, we can
     // either style the placeholder or hide it. Let's just hide it now.
@@ -219,8 +228,8 @@ const styleMap = {
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     fontFamily: '"Inconsolata", "Menlo", "Consolas", monospace',
     fontSize: 16,
-    padding: 2
-  }
+    padding: 2,
+  },
 };
 
 function getBlockStyle(block) {
