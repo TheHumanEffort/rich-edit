@@ -7,6 +7,7 @@ import {
   ContentState,
   Entity,
   RichUtils,
+  AtomicBlockUtils,
   convertToRaw,
   CompositeDecorator,
   Modifier
@@ -16,10 +17,36 @@ import htmlToContent from './utils/htmlToContent';
 import draftRawToHtml from './utils/draftRawToHtml';
 
 import Link from './components/Link';
+import Image from './components/Image';
 import EntityControls from './components/EntityControls';
 import InlineStyleControls from './components/InlineStyleControls';
 import BlockStyleControls from './components/BlockStyleControls';
 import findEntities from './utils/findEntities';
+
+const Media = (props) => {
+  const entity = Entity.get(props.block.getEntityAt(0));
+  const { src } = entity.getData();
+  const type = entity.getType();
+
+  let media;
+
+  if (type === 'image') {
+    media = <Image src={src} />;
+  }
+
+  return media;
+};
+
+function mediaBlockRenderer(block) {
+  if (block.getType() === 'atomic') {
+    return {
+      component: Media,
+      editable: false,
+    };
+  }
+
+  return null;
+}
 
 export default class BasicHtmlEditor extends React.Component {
   constructor(props) {
@@ -38,6 +65,7 @@ export default class BasicHtmlEditor extends React.Component {
     this.ENTITY_CONTROLS = [
       { label: 'Add Link', action: this._addLink.bind(this) },
       { label: 'Remove Link', action: this._removeLink.bind(this) },
+      { label: 'Add Image', action: this._addImage.bind(this) },
     ];
 
     this.INLINE_STYLES = [
@@ -93,8 +121,11 @@ export default class BasicHtmlEditor extends React.Component {
     this.toggleBlockType = (type) => this._toggleBlockType(type);
     this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
     this.handleReturn = (e) => this._handleReturn(e);
+
     this.addLink = this._addLink.bind(this);
     this.removeLink = this._removeLink.bind(this);
+
+    this.addImage = this._addImage.bind(this);
   }
 
   _handleKeyCommand(command) {
@@ -175,6 +206,14 @@ export default class BasicHtmlEditor extends React.Component {
     this.onChange(RichUtils.toggleLink(editorState, selection, null));
   }
 
+  _addImage(/* e */) {
+    const { editorState } = this.state;
+
+    const src = window.prompt('Enter a URL');
+    const entityKey = Entity.create('image', 'IMMUTABLE', { src });
+    this.onChange(AtomicBlockUtils.insertAtomicBlock(editorState, entityKey, ' '));
+  }
+
   render() {
     const { editorState } = this.state;
 
@@ -207,6 +246,7 @@ export default class BasicHtmlEditor extends React.Component {
         <div className={className} /* onClick={this.focus} */>
           <Editor
             blockStyleFn={getBlockStyle}
+            blockRenderFn={mediaBlockRenderer}
             customStyleMap={styleMap}
             editorState={editorState}
             handleKeyCommand={this.handleKeyCommand}
