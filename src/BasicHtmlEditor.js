@@ -32,21 +32,12 @@ const Media = (props) => {
 
   if (type === 'image') {
     media = <Image src={src} />;
+  } else {
+    media = <p>Unknown {JSON.stringify(entity.getData())}</p>;
   }
 
   return media;
 };
-
-function mediaBlockRenderer(block) {
-  if (block.getType() === 'atomic') {
-    return {
-      component: Media,
-      editable: false,
-    };
-  }
-
-  return null;
-}
 
 export default class BasicHtmlEditor extends React.Component {
   constructor(props) {
@@ -211,6 +202,7 @@ export default class BasicHtmlEditor extends React.Component {
 
     const src = window.prompt('Enter a URL');
     const entityKey = Entity.create('image', 'IMMUTABLE', { src });
+
     this.onChange(AtomicBlockUtils.insertAtomicBlock(editorState, entityKey, ' '));
   }
 
@@ -246,7 +238,7 @@ export default class BasicHtmlEditor extends React.Component {
         <div className={className} /* onClick={this.focus} */>
           <Editor
             blockStyleFn={getBlockStyle}
-            blockRenderFn={mediaBlockRenderer}
+            blockRendererFn={mediaBlockRenderer}
             customStyleMap={styleMap}
             editorState={editorState}
             handleKeyCommand={this.handleKeyCommand}
@@ -277,4 +269,17 @@ function getBlockStyle(block) {
     case 'blockquote': return 'RichEditor-blockquote';
     default: return null;
   }
+}
+
+function mediaBlockRenderer(block) {
+  console.log('Media block renderer: ' + JSON.stringify(block));
+
+  if (block.getType() === 'atomic') {
+    return {
+      component: Media,
+      editable: false,
+    };
+  }
+
+  return null;
 }

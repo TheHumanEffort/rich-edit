@@ -1,32 +1,32 @@
 import processInlineStylesAndEntities from './processInlineStylesAndEntities';
 
 let blockTagMap = {
-  'header-one':               ['<h1>','</h1>\n'],
-  'header-two':               ['<h1>','</h1>\n'],
-  'unstyled':                 ['<p>','</p>\n'],
-  'code-block':               ['<pre><code>','</code></pre>\n'],
-  'blockquote':               ['<blockquote>','</blockquote>\n'],
-  'ordered-list-item':        ['<li>','</li>\n'],
-  'unordered-list-item':      ['<li>','</li>\n'],
-  'default':                  ['<p>','</p>\n']
+  'header-one':               ['<h1>', '</h1>\n'],
+  'header-two':               ['<h2>', '</h2>\n'],
+  unstyled:                 ['<p>', '</p>\n'],
+  'code-block':               ['<pre><code>', '</code></pre>\n'],
+  blockquote:               ['<blockquote>', '</blockquote>\n'],
+  'ordered-list-item':        ['<li>', '</li>\n'],
+  'unordered-list-item':      ['<li>', '</li>\n'],
+  default:                  ['<p>', '</p>\n'],
 };
 
 let inlineTagMap = {
-  'BOLD': ['<strong>','</strong>'],
-  'ITALIC': ['<em>','</em>'],
-  'UNDERLINE': ['<u>','</u>'],
-  'CODE': ['<code>','</code>'],
-  'STRIKETHROUGH': ['<del>', '</del>'],
-  'default': ['<span>','</span>']
+  BOLD: ['<strong>', '</strong>'],
+  ITALIC: ['<em>', '</em>'],
+  UNDERLINE: ['<u>', '</u>'],
+  CODE: ['<code>', '</code>'],
+  STRIKETHROUGH: ['<del>', '</del>'],
+  default: ['<span>', '</span>'],
 };
 
 let entityTagMap = {
-  'link': ['<a href="<%= href %>">', '</a>']
+  link: ['<a href="<%= href %>">', '</a>'],
 };
 
 let nestedTagMap = {
   'ordered-list-item': ['<ol>', '</ol>'],
-  'unordered-list-item': ['<ul>', '</ul>']
+  'unordered-list-item': ['<ul>', '</ul>'],
 };
 
 export default function(raw) {
@@ -43,29 +43,26 @@ export default function(raw) {
     }
 
     // open tag if nested
-    if ( nestedTagMap[block.type] && nestLevel[0] !== block.type) {
+    if (nestedTagMap[block.type] && nestLevel[0] !== block.type) {
       html += nestedTagMap[block.type][0] + '\n';
       nestLevel.unshift(block.type);
     }
 
     let blockTag = blockTagMap[block.type];
 
-    html += blockTag ?
-      blockTag[0] +
-        processInlineStylesAndEntities(inlineTagMap, entityTagMap, raw.entityMap, block) +
-        blockTag[1] :
-      blockTagMap['default'][0] +
-        processInlineStylesAndEntities(inlineTagMap, block) +
-        blockTagMap['default'][1];
+    if (blockTag) html += blockTag[0];
+    html += processInlineStylesAndEntities(inlineTagMap, entityTagMap, raw.entityMap, block);
+    if (blockTag) html += blockTag[1];
 
     // close any unclosed blocks if we've processed all the blocks
-    if ( index === lastIndex && nestLevel.length > 0 ) {
-      while(nestLevel.length > 0 ) {
-        html += nestedTagMap[ nestLevel.shift() ][1];
+    if (index === lastIndex && nestLevel.length > 0) {
+      while (nestLevel.length > 0) {
+        html += nestedTagMap[nestLevel.shift()][1];
       }
     }
 
   });
+
   return html;
 
 }
