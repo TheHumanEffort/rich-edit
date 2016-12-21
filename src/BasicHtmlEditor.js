@@ -86,7 +86,7 @@ export default class BasicHtmlEditor extends React.Component {
       { label: 'Code Block', style: 'code-block' },
     ];
 
-    jsonValue = jsonValue || htmlToContent(htmlValue);
+    jsonValue = jsonValue || (htmlValue && htmlToContent(htmlValue));
 
     if (jsonValue) {
       editorState = EditorState.createWithContent(
