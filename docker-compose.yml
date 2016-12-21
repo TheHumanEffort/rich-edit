@@ -1,0 +1,7 @@
+app:
+  build: .
+  environment:
+    - VIRTUAL_PORT=8080
+  volumes:
+    - .:/application
+  command: /package/node_modules/.bin/webpack-dev-server --host 0.0.0.0
