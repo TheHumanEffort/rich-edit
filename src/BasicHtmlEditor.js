@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import debounce from 'lodash/debounce';
+
 import {
   Editor,
   EditorState,
@@ -56,7 +57,8 @@ export default class BasicHtmlEditor extends React.Component {
     this.ENTITY_CONTROLS = [
       { label: 'Add Link', action: this._addLink.bind(this) },
       { label: 'Remove Link', action: this._removeLink.bind(this) },
-      { label: 'Add Image', action: this._addImage.bind(this) },
+      { label: 'Add Image', action: this._addImage.bind(this), prop: 'onAddImage' },
+      { label: 'Add Embed', action: this._addEmbed.bind(this), prop: 'onAddEmbed' },
     ];
 
     this.INLINE_STYLES = [
@@ -163,8 +165,6 @@ export default class BasicHtmlEditor extends React.Component {
     const selection = editorState.getSelection();
     const block = content.getBlockForKey(selection.getStartKey());
 
-    console.log(content.toJS(), selection.toJS(), block.toJS());
-
     if (block.type === 'code-block') {
       newContent = Modifier.insertText(content, selection, '\n');
       newEditorState = EditorState.push(editorState, newContent, 'add-new-line');
@@ -175,16 +175,19 @@ export default class BasicHtmlEditor extends React.Component {
     }
   }
 
-  _addLink(/* e */) {
+  insertLink(href) {
     const { editorState } = this.state;
     const selection = editorState.getSelection();
     if (selection.isCollapsed()) {
       return;
     }
 
-    const href = window.prompt('Enter a URL');
     const entityKey = Entity.create('link', 'MUTABLE', { href });
     this.onChange(RichUtils.toggleLink(editorState, selection, entityKey));
+  }
+
+  _addLink(/* e */) {
+    if(this.props.onAddLink) this.props.onAddLink();
   }
 
   _removeLink(/* e */) {
@@ -197,13 +200,32 @@ export default class BasicHtmlEditor extends React.Component {
     this.onChange(RichUtils.toggleLink(editorState, selection, null));
   }
 
-  _addImage(/* e */) {
+  insertImage(src) {
     const { editorState } = this.state;
 
-    const src = window.prompt('Enter a URL');
     const entityKey = Entity.create('image', 'IMMUTABLE', { src });
 
     this.onChange(AtomicBlockUtils.insertAtomicBlock(editorState, entityKey, ' '));
+  }
+
+  insertEmbed(html) {
+    const { editorState } = this.state;
+
+    const entityKey = Entity.create('embed', 'IMMUTABLE', { html });
+
+    this.onChange(AtomicBlockUtils.insertAtomicBlock(editorState, entityKey, ' '));
+  }
+
+  _addImage(/* e */) {
+    if(this.props.onAddImage) this.props.onAddImage();
+  }
+
+  _addEmbed() {
+    if(this.props.onAddEmbed) this.props.onAddEmbed();
+  }
+
+  _entityControls() {
+    return this.ENTITY_CONTROLS.filter((e) => !e.prop || e.prop in this.props);
   }
 
   render() {
@@ -233,7 +255,7 @@ export default class BasicHtmlEditor extends React.Component {
         />
         <EntityControls
           editorState={editorState}
-          entityControls={this.ENTITY_CONTROLS}
+          entityControls={this._entityControls()}
         />
         <div className={className} /* onClick={this.focus} */>
           <Editor
@@ -272,8 +294,6 @@ function getBlockStyle(block) {
 }
 
 function mediaBlockRenderer(block) {
-  console.log('Media block renderer: ' + JSON.stringify(block));
-
   if (block.getType() === 'atomic') {
     return {
       component: Media,

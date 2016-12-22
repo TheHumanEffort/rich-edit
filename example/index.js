@@ -23,12 +23,29 @@ class BasicHtmlEditorExample extends React.Component {
     });
   }
 
+  addImage() {
+    var src = prompt('Image src: ');
+    if(src) {
+      this.refs.basicEditor.insertImage(src);
+    }
+  }
+
+  addEmbed() {
+    var code = prompt('Embed code: ');
+    if(code) {
+      this.refs.basicEditor.insertEmbed(code);
+    }
+  }
+
   render() {
     return (
       <div>
         <BasicHtmlEditor
+          ref="basicEditor"
           value={ this.state.html }
           onChange={ (html, raw) => this.updateHtml(html, raw) }
+          onAddImage={ () => this.addImage() }
+          onAddEmbed={ () => this.addEmbed() }
           debounce={ 500 }
         />
         <div style={{ margin: '30px 10px 10px 10px' }}>

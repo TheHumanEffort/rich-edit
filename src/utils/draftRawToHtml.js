@@ -23,6 +23,7 @@ let inlineTagMap = {
 let entityTagMap = {
   link: ['<a href="<%= href %>">', '</a>'],
   image: ['<img src="<%= src %>">', '</img>'],
+  embed: ['<%= html %>','']
 };
 
 let nestedTagMap = {
